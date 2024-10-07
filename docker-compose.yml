@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  postgres-db:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: alejo   # Cambia 'your_username' por tu nombre de usuario deseado
+      POSTGRES_PASSWORD: P05d4t4@*  # Cambia 'your_password' por tu contraseña
+      POSTGRES_DB: vehicle_rental   # Cambia 'your_database' por el nombre de la base de datos
+    ports:
+      - "5433:5432"  # Puerto externo:interno
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+
+volumes:
+  postgres-data:
+
+networks:
+  backend-network:
