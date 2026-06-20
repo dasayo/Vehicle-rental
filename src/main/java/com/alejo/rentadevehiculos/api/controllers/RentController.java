@@ -1,8 +1,8 @@
 package com.alejo.rentadevehiculos.api.controllers;
 
 import com.alejo.rentadevehiculos.api.models.request.RentRequest;
+import com.alejo.rentadevehiculos.api.models.response.RentResponse;
 import com.alejo.rentadevehiculos.api.models.response.SuccesResponse;
-import com.alejo.rentadevehiculos.domain.entities.RentEntity;
 import com.alejo.rentadevehiculos.infrastructure.abstractServices.IRentService;
 import com.alejo.rentadevehiculos.util.Status;
 import jakarta.validation.Valid;
@@ -29,22 +29,23 @@ public class RentController {
     }
 
     @GetMapping("/listAll")
-    public Set<RentEntity> getAll(){
+    public Set<RentResponse> getAll(){
        return rentService.getAllRents();
     }
 
     @GetMapping("/")
-    public RentEntity getById(@RequestParam Long id){
+    public RentResponse getById(@RequestParam Long id){
         return rentService.getRentById(id);
     }
+
     @GetMapping("/user")
-    public Set<RentEntity> getRentByUserId(@RequestParam Long id){
+    public Set<RentResponse> getRentByUserId(@RequestParam Long id){
         return rentService.getRentsByUserId(id);
     }
 
     @PutMapping("/close")
     public ResponseEntity<SuccesResponse> closeRent(@RequestParam Long id) throws Exception {
-        RentEntity rent = rentService.updateStatus(id);
+        RentResponse rent = rentService.updateStatus(id);
         if (rent.getStatus() == Status.UNDER_REVIEW) {
             return ResponseEntity.accepted().body(new SuccesResponse("The rent is under review (UNDER_REVIEW). No further actions can be performed at this time."));
         }

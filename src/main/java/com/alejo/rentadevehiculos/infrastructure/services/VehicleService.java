@@ -5,6 +5,7 @@ import com.alejo.rentadevehiculos.api.models.response.VehicleResponse;
 import com.alejo.rentadevehiculos.domain.entities.VehicleEntity;
 import com.alejo.rentadevehiculos.domain.repositories.VehicleRepository;
 import com.alejo.rentadevehiculos.infrastructure.abstractServices.IVehicleService;
+import com.alejo.rentadevehiculos.infrastructure.mappers.VehicleMapper;
 import com.alejo.rentadevehiculos.util.exceptions.BadRequestRentalVehiclesException;
 import com.alejo.rentadevehiculos.util.exceptions.VehicleNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class VehicleService implements IVehicleService {
 
     private final VehicleRepository vehicleRepository;
+    private final VehicleMapper vehicleMapper;
 
     @Override
     public VehicleResponse getVehicleByLicensePlate(String licensePlate) {
@@ -28,13 +30,13 @@ public class VehicleService implements IVehicleService {
     @Override
     public Set<VehicleResponse> getAllVehicle() {
         List<VehicleEntity> list = vehicleRepository.getAllByIsActiveTrue();
-        return list.stream().map(this::toVehicleResponse).collect(Collectors.toSet());
+        return list.stream().map(vehicleMapper::toResponse).collect(Collectors.toSet());
     }
 
     @Override
     public Set<VehicleResponse> getAllVehicleAvailable() {
         List<VehicleEntity> list = vehicleRepository.getAllByIsAvailableTrueAndIsActiveTrue();
-        return list.stream().map(this::toVehicleResponse).collect(Collectors.toSet());
+        return list.stream().map(vehicleMapper::toResponse).collect(Collectors.toSet());
     }
 
     @Override
@@ -61,8 +63,4 @@ public class VehicleService implements IVehicleService {
         vehicleRepository.save(vehicle);
     }
 
-    private VehicleResponse toVehicleResponse(VehicleEntity vehicle){
-        return new VehicleResponse(vehicle.getLicensePlate(), vehicle.getBrand(),
-                vehicle.getModel(), vehicle.getIsAvailable(), vehicle.getRate());
-    }
 }

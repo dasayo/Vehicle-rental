@@ -9,19 +9,14 @@ import com.alejo.rentadevehiculos.domain.entities.UserEntity;
 import com.alejo.rentadevehiculos.domain.repositories.PaymentMethodRepository;
 import com.alejo.rentadevehiculos.domain.repositories.UserRepository;
 import com.alejo.rentadevehiculos.infrastructure.abstractServices.IPaymentMethodService;
+import com.alejo.rentadevehiculos.infrastructure.mappers.PaymentMethodMapper;
 import com.alejo.rentadevehiculos.util.Method;
-import com.alejo.rentadevehiculos.util.encrypt.EncryptionUtil;
 import com.alejo.rentadevehiculos.util.exceptions.PaymentNotFoundException;
 import com.alejo.rentadevehiculos.util.exceptions.UserNotFoundExeption;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,97 +24,45 @@ public class PaymentMethodService implements IPaymentMethodService {
 
     private final UserRepository userRepository;
     private final PaymentMethodRepository paymentMethodRepository;
-
-    @Value("${encryption.secret.key}")
-    private String secretKeyString;
-
-    private SecretKey secretKey;
-
-    // Convierte el String a SecretKey después de inyectar la clave
-    @PostConstruct
-    public void init() {
-        this.secretKey = EncryptionUtil.getSecretKeyFromBase64(secretKeyString);
-    }
-
+    private final CardEncryptionService cardEncryptionService;
+    private final PaymentMethodMapper paymentMethodMapper;
 
     @Override
-    public ResponseEntity<SuccesResponse> addPaymetMethod(PaymentMethodRequest paymentMethodRequest) {
+    public void addPaymetMethod(PaymentMethodRequest request) {
+        UserEntity user = userRepository.findUserById(request.getId_user())
+                .orElseThrow(() -> new UserNotFoundExeption("It is necessary that the user exists"));
 
-        UserEntity user = userRepository.findUserById(paymentMethodRequest.
-                getId_user()).
-                orElseThrow(()-> new UserNotFoundExeption("It is necessary that the user exists"));
-
-        if (!paymentMethodRequest.getMethod().name().equals(Method.CASH.name())) {
-            String cardNumber = paymentMethodRequest.getCardNumber();
-            PaymentMethodEntity paymentMethod = PaymentMethodEntity.builder()
-                    .isActive(true)
-                    .method(paymentMethodRequest.getMethod())
-                    .lastDigits(cardNumber.substring(cardNumber.length() - 4))
-                    .user(user)
-                    .build();
-            try {
-                paymentMethod.assignEncryptedCardNumber(encryptCardNumber(cardNumber));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            paymentMethodRepository.save(paymentMethod);
-        } else {
-            PaymentMethodEntity paymentMethod = PaymentMethodEntity.builder()
-                    .isActive(true)
-                    .method(Method.CASH)
-                    .user(user)
-                    .build();
-            paymentMethodRepository.save(paymentMethod);
+        PaymentMethodEntity paymentMethod = paymentMethodMapper.toEntity(request, user);
+        if (!request.getMethod().name().equals(Method.CASH.name())) {
+            paymentMethod.assignEncryptedCardNumber(
+                    this.cardEncryptionService.encrypt(paymentMethod.getCardNumber())
+            );
         }
-
-        return ResponseEntity.ok(new SuccesResponse("method added correctly"));
+        paymentMethodRepository.save(paymentMethod);
     }
-
     @Override
     public List<PaymentMethodResponse> listPaymentMethod(Long id) {
         return List.of();
     }
 
     @Override
-    public ResponseEntity<SuccesResponse> editPaymentMethod(PaymentUpdateRequest request) {
-        PaymentMethodEntity paymentMethod= requesToPaymentEntiy(request);
+    public void editPaymentMethod(PaymentUpdateRequest request) {
+        PaymentMethodEntity paymentMethod = paymentMethodRepository
+                .findPaymentByPaymentId(request.getId())
+                .orElseThrow(() -> new PaymentNotFoundException("Error id is not valid"));
+        paymentMethod.assignEncryptedCardNumber(
+                this.cardEncryptionService.encrypt(request.getNewCardNumber())
+        );
+        paymentMethod.setLastDigits(request.getNewCardNumber().substring(request.getNewCardNumber().length() - 4));
         paymentMethodRepository.save(paymentMethod);
-        return ResponseEntity.ok(new SuccesResponse("Method updated correctly"));
     }
 
     @Override
-    public ResponseEntity<SuccesResponse> deletePaymentMethod(Long id) {
-
-        PaymentMethodEntity paymentMethodEntity = paymentMethodRepository.
-                findPaymentByPaymentId(id).orElseThrow(()->new PaymentNotFoundException("Error id is not valid"));
-        paymentMethodEntity.setIsActive(false);
-        paymentMethodRepository.save(paymentMethodEntity);
-        return ResponseEntity.ok(new SuccesResponse("payment method correctly removed"));
+    public void deletePaymentMethod(Long id) {
+        PaymentMethodEntity paymentMethod = paymentMethodRepository
+                .findPaymentByPaymentId(id)
+                .orElseThrow(() -> new PaymentNotFoundException("Error id is not valid"));
+        paymentMethod.setIsActive(false);
+        paymentMethodRepository.save(paymentMethod);
     }
-
-    private String encryptCardNumber(String cardNumber) throws Exception{
-        return EncryptionUtil.encrypt(cardNumber, secretKey);
-    }
-
-    public PaymentMethodResponse toPaymentMethodResponse(PaymentMethodEntity paymentMethod){
-        return new PaymentMethodResponse(paymentMethod.getId(),paymentMethod.getMethod(),
-                paymentMethod.getCardNumber(), paymentMethod.getLastDigits());
-    }
-
-    private PaymentMethodEntity requesToPaymentEntiy(PaymentUpdateRequest request){
-
-        Optional<PaymentMethodEntity> paymentMethodEntityOptional=
-                paymentMethodRepository.findPaymentByPaymentId(request.getId());
-        PaymentMethodEntity paymentMethod= paymentMethodEntityOptional.
-                orElseThrow(()->new PaymentNotFoundException("Error id is not valid"));
-        try {
-            paymentMethod.assignEncryptedCardNumber(encryptCardNumber(request.getNewCardNumber()));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        paymentMethod.setLastDigits(request.getNewCardNumber()
-                .substring(request.getNewCardNumber().length() - 4));
-        return paymentMethod;
-    }
-
 }

@@ -1,18 +1,15 @@
 package com.alejo.rentadevehiculos.api.models.response;
 
-import com.alejo.rentadevehiculos.domain.entities.PaymentMethodEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.stereotype.Component;
+
 
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
 
-@Component
+import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

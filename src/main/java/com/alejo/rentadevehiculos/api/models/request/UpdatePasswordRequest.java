@@ -15,5 +15,5 @@ public class UpdatePasswordRequest {
     private String oldPassword;
     private String newPassword;
     private String confirmNewPassword;
-
+    private Long id;
 }
