@@ -1,33 +1,30 @@
 package com.alejo.rentadevehiculos.api.controllers;
 
+import com.alejo.rentadevehiculos.api.models.request.UpdatePasswordRequest;
 import com.alejo.rentadevehiculos.api.models.request.UserRequest;
+import com.alejo.rentadevehiculos.api.models.response.SuccesResponse;
 import com.alejo.rentadevehiculos.api.models.response.UserResponse;
 import com.alejo.rentadevehiculos.infrastructure.abstractServices.IUserService;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/vehicle-rental/user")
-@Data
-@Builder
-
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserController {
 
-    private IUserService userService;
+    private final IUserService userService;
 
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody UserRequest userRequest){
         userService.userCreate(userRequest);
-
-        return null;
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .build();
     }
 
     @GetMapping("/list")
@@ -35,16 +32,24 @@ public class UserController {
         return userService.listUsers();
     }
 
-    @GetMapping("/")
+    @GetMapping("")
     private UserResponse getUser(@RequestParam Long id){
         return userService.findUserByid(id);
     }
 
-    @DeleteMapping("/")
-    private Map<?,?> deleteUser(@RequestParam Long id){
-        return userService.deleteUserBy(id);
+    @DeleteMapping("")
+    public ResponseEntity<SuccesResponse> deleteUser(@RequestParam Long id){
+        userService.deleteUserBy(id);
+        return ResponseEntity.ok(new SuccesResponse("Usuario eliminado de manera correcta"));
     }
 
+    @PutMapping("/update-password")
+    private ResponseEntity<?> updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest){
+        userService.updatePasswordUser(updatePasswordRequest);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .build();
+    }
 
 
 }

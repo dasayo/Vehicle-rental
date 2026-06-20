@@ -1,33 +1,24 @@
 package com.alejo.rentadevehiculos.infrastructure.services;
 
 import com.alejo.rentadevehiculos.api.models.request.VehicleRequest;
-import com.alejo.rentadevehiculos.api.models.response.SuccesResponse;
 import com.alejo.rentadevehiculos.api.models.response.VehicleResponse;
 import com.alejo.rentadevehiculos.domain.entities.VehicleEntity;
 import com.alejo.rentadevehiculos.domain.repositories.VehicleRepository;
 import com.alejo.rentadevehiculos.infrastructure.abstractServices.IVehicleService;
+import com.alejo.rentadevehiculos.util.exceptions.BadRequestRentalVehiclesException;
 import com.alejo.rentadevehiculos.util.exceptions.VehicleNotFoundException;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@Data
-@AllArgsConstructor
-@Builder
-
+@RequiredArgsConstructor
 public class VehicleService implements IVehicleService {
 
-    private VehicleRepository vehicleRepository;
+    private final VehicleRepository vehicleRepository;
 
     @Override
     public VehicleResponse getVehicleByLicensePlate(String licensePlate) {
@@ -47,30 +38,27 @@ public class VehicleService implements IVehicleService {
     }
 
     @Override
-    public ResponseEntity<SuccesResponse> createVehicle(VehicleRequest request) {
-        VehicleEntity vehicle = new VehicleEntity();
-        vehicle.setIsAvailable(true);
-        vehicle.setIsActive(true);
-        vehicle.setRate(request.getRate());
-        vehicle.setLicensePlate(request.getLicensePlate());
-        vehicle.setBrand(request.getBrand());
-        vehicle.setModel(request.getModel());
+    public void createVehicle(VehicleRequest request) {
+        VehicleEntity vehicle = VehicleEntity.builder()
+                .licensePlate(request.getLicensePlate())
+                .brand(request.getBrand())
+                .model(request.getModel())
+                .rate(request.getRate())
+                .isAvailable(true)
+                .isActive(true)
+                .build();
         vehicleRepository.save(vehicle);
-        return ResponseEntity.ok(new SuccesResponse("Vehicle stored properly"));
     }
 
     @Override
-    public ResponseEntity<SuccesResponse> deletVehicle(String licensePlate) {
-
-        Optional<VehicleEntity> optionalVehicle = vehicleRepository.getVehicle(licensePlate);
-        VehicleEntity vehicle = optionalVehicle.
-                orElseThrow(()->new VehicleNotFoundException("Error! License Plate is not valid"));
-        if (!vehicle.getIsAvailable()){
-            return ResponseEntity.badRequest().body(new SuccesResponse("the vehicle cannot be removed"));
+    public void deletVehicle(String licensePlate) {
+        VehicleEntity vehicle = vehicleRepository.getVehicle(licensePlate)
+                .orElseThrow(() -> new VehicleNotFoundException("Error! License Plate is not valid"));
+        if (!vehicle.getIsAvailable()) {
+            throw new BadRequestRentalVehiclesException("the vehicle cannot be removed");
         }
         vehicle.setIsActive(false);
         vehicleRepository.save(vehicle);
-        return ResponseEntity.ok(new SuccesResponse("vehicle properly disposed of"));
     }
 
     private VehicleResponse toVehicleResponse(VehicleEntity vehicle){

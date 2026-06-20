@@ -8,40 +8,39 @@ import com.alejo.rentadevehiculos.domain.repositories.PaymentMethodRepository;
 import com.alejo.rentadevehiculos.domain.repositories.UserRepository;
 import com.alejo.rentadevehiculos.infrastructure.abstractServices.IUserService;
 import com.alejo.rentadevehiculos.util.exceptions.UserNotFoundExeption;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Data
-@AllArgsConstructor
-@Builder
+@RequiredArgsConstructor
 @Slf4j
 public class UserService implements IUserService {
 
     private final PaymentMethodRepository paymentMethodRepository;
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
-    private UserRepository userRepository;
-    private final PaymentMethodService paymentMethodService; // Agrega esta línea
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final UserRepository userRepository;
+    private final PaymentMethodService paymentMethodService;
 
     @Override
     public void userCreate(UserRequest userRequest) {
-        UserEntity user = new UserEntity();
-        user.setUsername(userRequest.getUsername());
-        user.setFirstName(userRequest.getFirstName());
-        user.setIsActive(true);
-        user.setLastName(userRequest.getLastName());
-        user.setRegistrationDate(LocalDateTime.now());
-        user.setPassword(encryptPassword(userRequest.getPassword()));
-        user.setPaymentMethods(new HashSet<>());
+        UserEntity user = UserEntity.builder()
+                 .username(userRequest.getUsername())
+                 .firstName(userRequest.getFirstName())
+                 .lastName(userRequest.getLastName())
+                 .isActive(true)
+                 .registrationDate(LocalDateTime.now())
+                 .password(encryptPassword(userRequest.getPassword()))
+                 .paymentMethods(new HashSet<>())
+                 .build();
+
         log.info(String.valueOf(user));
 
         userRepository.save(user);
@@ -50,8 +49,12 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public ResponseEntity<?> updatePasswordUser(UpdatePasswordRequest updatePasswordRequest) {
-        return null;
+    public void updatePasswordUser(UpdatePasswordRequest updatePasswordRequest) {
+        UserEntity userEntity = userRepository.findUserById(updatePasswordRequest.getId())
+                .orElseThrow(() -> new UserNotFoundExeption("Error el usuario no existe"));
+
+        userEntity.assignEncryptedPassword(encryptPassword(updatePasswordRequest.getNewPassword()));
+        userRepository.save(userEntity);
     }
 
     @Override
@@ -64,18 +67,17 @@ public class UserService implements IUserService {
 
     @Override
     public UserResponse findUserByid(Long id) {
-        UserResponse userResponse = new UserResponse();
-        Optional<UserEntity> user = userRepository.findUserById(id);
-        return user.map(this::toUserResponse).orElseThrow(()-> new UserNotFoundExeption("Error usuario no existe"));
+        return userRepository.findUserById(id)
+                .map(this::toUserResponse)
+                .orElseThrow(() -> new UserNotFoundExeption("Error usuario no existe"));
     }
 
     @Override
-    public Map<String, String> deleteUserBy(Long id) {
-        UserEntity userEntity = userRepository.findUserById(id).orElseThrow(()->
-                new UserNotFoundExeption("Error el usuario no existe"));
+    public void deleteUserBy(Long id) {
+        UserEntity userEntity = userRepository.findUserById(id)
+                .orElseThrow(() -> new UserNotFoundExeption("Error el usuario no existe"));
         userEntity.setIsActive(false);
         userRepository.save(userEntity);
-        return Collections.singletonMap("msg","Usuario elimidado de manera correcta");
     }
 
     private String encryptPassword(String password){

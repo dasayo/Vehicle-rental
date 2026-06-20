@@ -10,7 +10,8 @@ import java.util.Set;
 @Entity(name = "users")
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 @Builder
 public class UserEntity {
 
@@ -21,16 +22,21 @@ public class UserEntity {
     private String username;
     private String firstName;
     private String lastName;
+
+    @Setter(AccessLevel.NONE)
     private String password;
+
     private LocalDateTime registrationDate;
     private Boolean isActive;
 
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     @OneToMany(
-            mappedBy = "user",  // Cambiar de users a user
-            fetch = FetchType.LAZY,  // Cambiar a LAZY
+            mappedBy = "user",
+            fetch = FetchType.LAZY,
             cascade = CascadeType.ALL
     )
     private Set<PaymentMethodEntity> paymentMethods;
+
+    public void assignEncryptedPassword(String encryptedPassword) {
+        this.password = encryptedPassword;
+    }
 }

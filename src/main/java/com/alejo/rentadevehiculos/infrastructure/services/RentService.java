@@ -1,7 +1,6 @@
 package com.alejo.rentadevehiculos.infrastructure.services;
 
 import com.alejo.rentadevehiculos.api.models.request.RentRequest;
-import com.alejo.rentadevehiculos.api.models.response.SuccesResponse;
 import com.alejo.rentadevehiculos.domain.entities.PaymentMethodEntity;
 import com.alejo.rentadevehiculos.domain.entities.RentEntity;
 import com.alejo.rentadevehiculos.domain.entities.UserEntity;
@@ -16,10 +15,8 @@ import com.alejo.rentadevehiculos.util.Status;
 import com.alejo.rentadevehiculos.util.encrypt.EncryptionUtil;
 import com.alejo.rentadevehiculos.util.exceptions.*;
 import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -31,7 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@Data
+@RequiredArgsConstructor
 public class RentService implements IRentService {
 
     private final PaymentMethodRepository paymentMethodRepository;
@@ -51,35 +48,32 @@ public class RentService implements IRentService {
     }
 
     @Override
-    public ResponseEntity<SuccesResponse> createRent(RentRequest request) {
-
+    public void createRent(RentRequest request) {
         UserEntity user = userRepository.findUserById(request.getUserId())
-                .orElseThrow(()-> new UserNotFoundExeption("The id is not valid"));
-        PaymentMethodEntity paymentMethod = paymentMethodRepository.
-                findPaymentByPaymentId(request.getPaymentMethodId())
-                .orElseThrow(()->new PaymentNotFoundException("the Id on Method is not valid"));
+                .orElseThrow(() -> new UserNotFoundExeption("The id is not valid"));
+        PaymentMethodEntity paymentMethod = paymentMethodRepository
+                .findPaymentByPaymentId(request.getPaymentMethodId())
+                .orElseThrow(() -> new PaymentNotFoundException("the Id on Method is not valid"));
         VehicleEntity vehicle = vehicleRepository.getVehicle(request.getVehicleId())
-                .orElseThrow(()-> new VehicleNotFoundException("The license plate on Vehicle is not valid"));
+                .orElseThrow(() -> new VehicleNotFoundException("The license plate on Vehicle is not valid"));
 
-        if (!user.getId().equals(paymentMethod.getUser().getId())){
+        if (!user.getId().equals(paymentMethod.getUser().getId())) {
             throw new BadRequestRentalVehiclesException("The payment method does not belong to the user.");
-        }else if(!vehicle.getIsAvailable()){
+        } else if (!vehicle.getIsAvailable()) {
             throw new BadRequestRentalVehiclesException("Vehicle is not available.");
         }
 
         vehicle.setIsAvailable(false);
         vehicleRepository.save(vehicle);
 
-        RentEntity rentEntity = new RentEntity();
-        rentEntity.setStatus(Status.OPEN);
-
-        rentEntity.setVehicle(vehicle);
-        rentEntity.setPaymentMethod(paymentMethod);
-        rentEntity.setStartDate(LocalDateTime.now());
-        rentEntity.setValue(BigDecimal.valueOf(0));
+        RentEntity rentEntity = RentEntity.builder()
+                .status(Status.OPEN)
+                .vehicle(vehicle)
+                .paymentMethod(paymentMethod)
+                .startDate(LocalDateTime.now())
+                .value(BigDecimal.valueOf(0))
+                .build();
         rentRepository.save(rentEntity);
-
-        return ResponseEntity.ok(new SuccesResponse("Rent created in the correct manner"));
     }
 
     @Override
@@ -93,21 +87,21 @@ public class RentService implements IRentService {
     }
 
     @Override
-    public ResponseEntity<SuccesResponse> updateStatus(Long id) throws Exception {
-        RentEntity rent = rentRepository.findById(id).
-                orElseThrow(()-> new RentNotFoundException("RenId is not valid"));
+    public RentEntity updateStatus(Long id) throws Exception {
+        RentEntity rent = rentRepository.findById(id)
+                .orElseThrow(() -> new RentNotFoundException("RenId is not valid"));
         rent.setValue(calcualatePrice(rent.getStartDate(), LocalDateTime.now(), rent.getVehicle().getRate()));
-        if(simulatePayment(rent)){
+        if (simulatePayment(rent)) {
             rent.setStatus(Status.UNDER_REVIEW);
             rentRepository.save(rent);
-            return ResponseEntity.accepted().body(new SuccesResponse("The rent is under review (UNDER_REVIEW). No further actions can be performed at this time."));
+            return rent;
         }
         rent.setStatus(Status.CLOSED);
         rent.getVehicle().setIsAvailable(true);
         vehicleRepository.save(rent.getVehicle());
         rent.setEndDate(LocalDateTime.now());
         rentRepository.save(rent);
-        return ResponseEntity.ok(new SuccesResponse("Rent closed in the correct manner"));
+        return rent;
     }
 
     @Override

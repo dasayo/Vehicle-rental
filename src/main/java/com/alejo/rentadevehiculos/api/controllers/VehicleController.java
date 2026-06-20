@@ -4,11 +4,9 @@ import com.alejo.rentadevehiculos.api.models.request.VehicleRequest;
 import com.alejo.rentadevehiculos.api.models.response.SuccesResponse;
 import com.alejo.rentadevehiculos.api.models.response.VehicleResponse;
 import com.alejo.rentadevehiculos.infrastructure.abstractServices.IVehicleService;
-import com.alejo.rentadevehiculos.infrastructure.services.VehicleService;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,15 +14,14 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("vehicle-rental/vehicle")
-@AllArgsConstructor
-@Data
-@Builder
+@RequiredArgsConstructor
 public class VehicleController {
-    private IVehicleService vehicleService;
+    private final IVehicleService vehicleService;
 
     @PostMapping("/")
     public ResponseEntity<SuccesResponse> createVehicle(@Valid @RequestBody VehicleRequest request){
-        return vehicleService.createVehicle(request);
+        vehicleService.createVehicle(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SuccesResponse("Vehicle stored properly"));
     }
 
     @GetMapping("/all")
@@ -37,8 +34,9 @@ public class VehicleController {
         return vehicleService.getAllVehicleAvailable();
     }
     @DeleteMapping("/delete")
-    private ResponseEntity<SuccesResponse> deleteVehicle(@RequestParam String licensePlate){
-        return vehicleService.deletVehicle(licensePlate);
+    public ResponseEntity<SuccesResponse> deleteVehicle(@RequestParam String licensePlate){
+        vehicleService.deletVehicle(licensePlate);
+        return ResponseEntity.ok(new SuccesResponse("vehicle properly disposed of"));
     }
 
 }

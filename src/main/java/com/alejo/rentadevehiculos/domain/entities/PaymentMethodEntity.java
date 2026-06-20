@@ -2,7 +2,6 @@ package com.alejo.rentadevehiculos.domain.entities;
 
 import com.alejo.rentadevehiculos.util.Method;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,16 +10,21 @@ import java.util.Set;
 @Entity(name = "payment_method")
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 @Builder
 public class PaymentMethodEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
+
     @Enumerated(EnumType.STRING)
+    @Setter(AccessLevel.NONE)
     private Method method;
 
+    @Setter(AccessLevel.NONE)
     private String cardNumber;
 
     private String lastDigits;
@@ -30,15 +34,18 @@ public class PaymentMethodEntity {
     @ManyToOne
     @JsonBackReference
     @JoinColumn(name = "id_user", nullable = false)
+    @Setter(AccessLevel.NONE)
     private UserEntity user;
 
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
+    @Setter(AccessLevel.NONE)
     @OneToMany(
             cascade = CascadeType.ALL,
             fetch = FetchType.EAGER,
             mappedBy = "paymentMethod"
     )
-    private  Set<RentEntity> rents;
+    private Set<RentEntity> rents;
 
+    public void assignEncryptedCardNumber(String encryptedCardNumber) {
+        this.cardNumber = encryptedCardNumber;
+    }
 }

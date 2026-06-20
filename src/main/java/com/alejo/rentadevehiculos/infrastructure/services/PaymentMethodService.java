@@ -14,10 +14,7 @@ import com.alejo.rentadevehiculos.util.encrypt.EncryptionUtil;
 import com.alejo.rentadevehiculos.util.exceptions.PaymentNotFoundException;
 import com.alejo.rentadevehiculos.util.exceptions.UserNotFoundExeption;
 import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,13 +24,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@Data
-
+@RequiredArgsConstructor
 public class PaymentMethodService implements IPaymentMethodService {
 
     private final UserRepository userRepository;
-    @Autowired
-    private PaymentMethodRepository paymentMethodRepository;
+    private final PaymentMethodRepository paymentMethodRepository;
 
     @Value("${encryption.secret.key}")
     private String secretKeyString;
@@ -54,26 +49,26 @@ public class PaymentMethodService implements IPaymentMethodService {
                 getId_user()).
                 orElseThrow(()-> new UserNotFoundExeption("It is necessary that the user exists"));
 
-        PaymentMethodEntity paymentMethod = new PaymentMethodEntity();
-        paymentMethod.setIsActive(true);
-
-        if(!paymentMethodRequest.getMethod().name().equals(Method.CASH.name())){
+        if (!paymentMethodRequest.getMethod().name().equals(Method.CASH.name())) {
+            String cardNumber = paymentMethodRequest.getCardNumber();
+            PaymentMethodEntity paymentMethod = PaymentMethodEntity.builder()
+                    .isActive(true)
+                    .method(paymentMethodRequest.getMethod())
+                    .lastDigits(cardNumber.substring(cardNumber.length() - 4))
+                    .user(user)
+                    .build();
             try {
-                paymentMethod.setCardNumber(encryptCardNumber(paymentMethodRequest.getCardNumber()));
+                paymentMethod.assignEncryptedCardNumber(encryptCardNumber(cardNumber));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            paymentMethod.setMethod(paymentMethodRequest.getMethod());
-            paymentMethod.setLastDigits(paymentMethodRequest.
-                    getCardNumber().
-                    substring(paymentMethodRequest.getCardNumber().length() - 4));
-
-            paymentMethod.setUser(user);
             paymentMethodRepository.save(paymentMethod);
-
-        }else {
-            paymentMethod.setMethod(Method.CASH);
-            paymentMethod.setUser(user);
+        } else {
+            PaymentMethodEntity paymentMethod = PaymentMethodEntity.builder()
+                    .isActive(true)
+                    .method(Method.CASH)
+                    .user(user)
+                    .build();
             paymentMethodRepository.save(paymentMethod);
         }
 
@@ -118,12 +113,12 @@ public class PaymentMethodService implements IPaymentMethodService {
         PaymentMethodEntity paymentMethod= paymentMethodEntityOptional.
                 orElseThrow(()->new PaymentNotFoundException("Error id is not valid"));
         try {
-            paymentMethod.setCardNumber(encryptCardNumber(request.getNewCardNumber()));
+            paymentMethod.assignEncryptedCardNumber(encryptCardNumber(request.getNewCardNumber()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         paymentMethod.setLastDigits(request.getNewCardNumber()
-                .substring(request.getNewCardNumber().length()-4));
+                .substring(request.getNewCardNumber().length() - 4));
         return paymentMethod;
     }
 

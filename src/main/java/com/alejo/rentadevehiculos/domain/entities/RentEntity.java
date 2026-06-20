@@ -4,10 +4,7 @@ import com.alejo.rentadevehiculos.util.Status;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,14 +12,19 @@ import java.time.LocalDateTime;
 @Entity(name = "rent")
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 @Builder
 public class RentEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
+    @Setter(AccessLevel.NONE)
     private LocalDateTime startDate;
+
     private LocalDateTime endDate;
 
     private BigDecimal value;
@@ -31,14 +33,14 @@ public class RentEntity {
     private Status status;
 
     @ManyToOne
-    @JoinColumn( name = "id_payment_method")
+    @JoinColumn(name = "id_payment_method")
     @JsonIgnore
+    @Setter(AccessLevel.NONE)
     private PaymentMethodEntity paymentMethod;
 
-
-
     @ManyToOne
-    @JoinColumn( name = "license_plate")
+    @JoinColumn(name = "license_plate")
     @JsonBackReference
+    @Setter(AccessLevel.NONE)
     private VehicleEntity vehicle;
 }
