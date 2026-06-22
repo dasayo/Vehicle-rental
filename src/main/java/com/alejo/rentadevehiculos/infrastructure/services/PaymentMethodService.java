@@ -15,11 +15,13 @@ import com.alejo.rentadevehiculos.util.exceptions.PaymentNotFoundException;
 import com.alejo.rentadevehiculos.util.exceptions.UserNotFoundExeption;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PaymentMethodService implements IPaymentMethodService {
 
     private final UserRepository userRepository;
@@ -41,6 +43,7 @@ public class PaymentMethodService implements IPaymentMethodService {
         paymentMethodRepository.save(paymentMethod);
     }
     @Override
+    @Transactional(readOnly = true)
     public List<PaymentMethodResponse> listPaymentMethod(Long id) {
         return List.of();
     }

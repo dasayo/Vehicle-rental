@@ -16,6 +16,7 @@ import com.alejo.rentadevehiculos.util.Status;
 import com.alejo.rentadevehiculos.util.exceptions.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class RentService implements IRentService {
 
     private final PaymentMethodRepository paymentMethodRepository;
@@ -64,6 +66,7 @@ public class RentService implements IRentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Set<RentResponse> getAllRents() {
         return rentRepository.findAll()
                 .stream().map(rentMapper::toResponse)
@@ -71,6 +74,7 @@ public class RentService implements IRentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public RentResponse getRentById(Long id) {
         return rentMapper
                 .toResponse(
@@ -103,6 +107,7 @@ public class RentService implements IRentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Set<RentResponse> getRentsByUserId(Long id) {
         userRepository.findUserById(id).orElseThrow(()->new UserNotFoundExeption("Id is not valid"));
         return rentRepository.findRentsByUserId(id)

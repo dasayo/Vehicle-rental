@@ -11,6 +11,7 @@ import com.alejo.rentadevehiculos.util.exceptions.UserNotFoundExeption;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class UserService implements IUserService {
 
     private final PasswordService passwordService;
@@ -55,6 +57,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserResponse> listUsers() {
         return userRepository.listUser()
                 .stream()
@@ -63,6 +66,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserResponse findUserByid(Long id) {
         return userRepository.findUserById(id)
                 .map(userMapper::toResponse)
