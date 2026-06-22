@@ -9,7 +9,6 @@ import com.alejo.rentadevehiculos.infrastructure.abstractServices.IUserService;
 import com.alejo.rentadevehiculos.infrastructure.mappers.UserMapper;
 import com.alejo.rentadevehiculos.util.exceptions.UserNotFoundExeption;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +19,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 @Transactional
 public class UserService implements IUserService {
 
@@ -40,11 +38,7 @@ public class UserService implements IUserService {
                  .paymentMethods(new HashSet<>())
                  .build();
 
-        log.info(String.valueOf(user));
-
         userRepository.save(user);
-
-        log.info(String.valueOf(user));
     }
 
     @Override
