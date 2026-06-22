@@ -27,7 +27,9 @@ public class VehicleService implements IVehicleService {
     @Override
     @Transactional(readOnly = true)
     public VehicleResponse getVehicleByLicensePlate(String licensePlate) {
-        return null;
+        VehicleEntity vehicle = vehicleRepository.getVehicle(licensePlate)
+                .orElseThrow(() -> new VehicleNotFoundException("Error! License Plate is not valid"));
+        return vehicleMapper.toResponse(vehicle);
     }
 
     @Override

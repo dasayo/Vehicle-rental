@@ -5,6 +5,7 @@ import com.alejo.rentadevehiculos.api.models.request.UserRequest;
 import com.alejo.rentadevehiculos.api.models.response.SuccesResponse;
 import com.alejo.rentadevehiculos.api.models.response.UserResponse;
 import com.alejo.rentadevehiculos.infrastructure.abstractServices.IUserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class UserController {
     private final IUserService userService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> create(@RequestBody UserRequest userRequest){
+    public ResponseEntity<?> create(@Valid @RequestBody UserRequest userRequest){
         userService.userCreate(userRequest);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -33,7 +34,7 @@ public class UserController {
     }
 
     @GetMapping("")
-    private UserResponse getUser(@RequestParam Long id){
+    public UserResponse getUser(@RequestParam Long id){
         return userService.findUserByid(id);
     }
 
@@ -44,7 +45,7 @@ public class UserController {
     }
 
     @PutMapping("/update-password")
-    private ResponseEntity<?> updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest){
+    public ResponseEntity<?> updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest){
         userService.updatePasswordUser(updatePasswordRequest);
         return ResponseEntity
                 .status(HttpStatus.OK)

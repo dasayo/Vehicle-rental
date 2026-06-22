@@ -25,18 +25,24 @@ public class VehicleController {
     }
 
     @GetMapping("/all")
-    private Set<VehicleResponse> getAll(){
+    public Set<VehicleResponse> getAll(){
         return vehicleService.getAllVehicle();
     }
 
     @GetMapping("/onlyAvailable")
-    private Set<VehicleResponse> getOnlyAvailable(){
+    public Set<VehicleResponse> getOnlyAvailable(){
         return vehicleService.getAllVehicleAvailable();
     }
     @DeleteMapping("/delete")
     public ResponseEntity<SuccesResponse> deleteVehicle(@RequestParam String licensePlate){
         vehicleService.deletVehicle(licensePlate);
         return ResponseEntity.ok(new SuccesResponse("vehicle properly disposed of"));
+    }
+
+    @GetMapping("/{licensePlate}")
+    public ResponseEntity<VehicleResponse> getVehicleByLicensePlate(@PathVariable String licensePlate){
+        VehicleResponse response = vehicleService.getVehicleByLicensePlate(licensePlate);
+        return ResponseEntity.ok(response);
     }
 
 }

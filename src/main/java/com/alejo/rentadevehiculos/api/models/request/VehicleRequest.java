@@ -1,6 +1,8 @@
 package com.alejo.rentadevehiculos.api.models.request;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,18 +17,19 @@ import java.math.BigDecimal;
 @Builder
 public class VehicleRequest {
 
-    @NotNull
-    @Size(min = 5, max = 20,message = "The size have to a length between 5 and 20 characters")
+    @NotBlank
+    @Size(min = 5, max = 20, message = "The size have to a length between 5 and 20 characters")
     private String licensePlate;
-    @NotNull
-    @Size(min = 1, max = 20,message = "The size have to a length between 5 and 20 characters")
+
+    @NotBlank
+    @Size(min = 1, max = 20, message = "The size have to a length between 5 and 20 characters")
     private String brand;
 
     @NotNull
+    @Positive(message = "Rate must be greater than zero")
     private BigDecimal rate;
 
-    @NotNull
-    @Size(min = 5, max = 20,message = "The size have to a length between 5 and 20 characters")
+    @NotBlank
+    @Size(min = 5, max = 20, message = "The size have to a length between 5 and 20 characters")
     private String model;
-
 }

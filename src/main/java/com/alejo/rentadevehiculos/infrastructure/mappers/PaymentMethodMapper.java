@@ -15,7 +15,6 @@ public class PaymentMethodMapper {
         return new PaymentMethodResponse(
                 paymentMethod.getId(),
                 paymentMethod.getMethod(),
-                paymentMethod.getCardNumber(),
                 paymentMethod.getLastDigits()
         );
     }

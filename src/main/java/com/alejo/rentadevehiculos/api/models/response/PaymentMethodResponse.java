@@ -14,7 +14,5 @@ public class PaymentMethodResponse {
 
     private Long id;
     private Method method;
-    private String cardNumber;
     private String lastDigits;
-
 }
