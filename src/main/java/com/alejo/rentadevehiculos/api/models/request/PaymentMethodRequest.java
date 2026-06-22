@@ -22,4 +22,12 @@ public class PaymentMethodRequest {
 
     @NotNull(message = "The Method cannot be Null")
     private Method method;
+
+    @AssertTrue
+    public boolean isCardNotEmpty() {
+        if (method == Method.CREDIT_CARD || method == Method.DEBIT_CARD) {
+            return cardNumber != null && !cardNumber.isEmpty();
+        }
+        return true; // For other methods, card number is not required
+    }
 }
